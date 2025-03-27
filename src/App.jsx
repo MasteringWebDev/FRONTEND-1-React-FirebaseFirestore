@@ -1,7 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
-import { db } from '../config/firebase'
-import { collection, addDoc } from "firebase/firestore"
+import { db, usersRef } from '../config/firebase'
+import { 
+  doc,
+  addDoc, 
+  getDocs ,
+  updateDoc,
+  deleteDoc
+} from "firebase/firestore"
 
 function App() {
   const [newUser, setNewUser] = useState({
@@ -10,11 +16,52 @@ function App() {
     age: '',
   })
 
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      let users = await getDocs(usersRef)
+      console.log('Fetched users successfully!')
+      users = users.docs.map(user => ({
+        id: user.id,
+        ...user.data(),
+      }))
+      console.log(users)
+    } catch(error) {
+      console.log(error)
+    }
+  }
+
   const addUser = async () => {
     try {
-      const users = collection(db, 'users')
-      const newUserRef = await addDoc(users, newUser)
-      console.log('User added successfully. User ID: ', newUserRef.id)
+      const newUserRef = await addDoc(usersRef, newUser)
+      console.log('User added successfully! User ID: ', newUserRef.id)
+    } catch(error) {
+      console.log(error)
+    }
+  }
+
+  const updateUser = async () => {
+    try {
+      const userRef = doc(db, 'users', 'dYzExCsnlUqNzrdu4B3u') 
+      await updateDoc(userRef, {
+        email: 'john.doe@yahoo.com',
+        age: 25,
+        isGraduated: true
+      })
+      console.log('User updated successfully')
+    } catch(error) {
+      console.log(error)
+    }
+  }
+
+  const deleteUser = async () => {
+    try {
+      const userRef = doc(db, 'users', 'bZnGfazw8DC10aGadOHk') 
+      await deleteDoc(userRef)
+      console.log('User deleted successfully')
     } catch(error) {
       console.log(error)
     }
@@ -56,6 +103,16 @@ function App() {
         >
           Add user
         </button>
+        <button
+          onClick={updateUser}
+        >
+          Update user
+        </button>
+        <button
+          onClick={deleteUser}
+        >
+          Delete user
+        </button>
       </div>
     </>
   )
@@ -76,10 +133,25 @@ export default App
             - db: Reference to Firestore database
             - 'collection': Name of the collection
             - Returns: A reference to the Firestore collection
+        - doc(): Returns a reference to a specific Firestore collection document
+          - Syntax: doc(db, 'collection', 'id')
+            - db: Reference to Firestore database
+            - 'collection': Name of the collection
+            - 'id': Unique identifier of the document
+            - Returns: A reference to the Firestore collection document
       - CRUD operations
         - Create (C)
           Method: addDoc(): Add a new document to a collection
             - Syntax: addDoc(collectionRef, jsonData)
+        - Read (R)
+          Method: getDocs(): Read all documents in a collection
+            - Syntax: getDocs(collectionRef)
+        - Update (U)
+          Method: updateDoc(): Update existing document in the collection
+            - Syntax: updateDoc(documentRef, jsonDataToUpdate)
+        - Delete (D)
+          Method: deleteDoc(): Delete existing document from the collection
+            - Syntax: deleteDoc(documentRef)
 
     - Steps
       - To connect Firebase to React app
